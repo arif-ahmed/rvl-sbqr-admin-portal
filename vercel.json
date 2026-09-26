@@ -6,11 +6,11 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "https://SBQR-API-HOST-PLACEHOLDER/v1/:path*"
+      "destination": "https://sbqr-api-dev.fly.dev/v1/:path*"
     },
     {
       "source": "/openapi/:path*",
-      "destination": "https://SBQR-API-HOST-PLACEHOLDER/openapi/:path*"
+      "destination": "https://sbqr-api-dev.fly.dev/openapi/:path*"
     },
     {
       "source": "/(.*)",
