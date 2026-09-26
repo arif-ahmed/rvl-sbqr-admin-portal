@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+/*
+ * BanglaQR theme tokens — from rvl-sbqr-docs/internal-ops-portal-nextjs-spec.md §3
+ * (national payment identity: Bangladesh Green, BanglaQR Crimson, Taka Gold).
+ */
+@theme {
+  --color-bqr-green: #006a4e;
+  --color-bqr-green-deep: #004c38;
+  --color-bqr-green-darkest: #003325;
+  --color-bqr-green-subtle: #f0f7f4;
+  --color-bqr-green-surface: #e6f0ec;
+  --color-bqr-crimson: #d90429;
+  --color-bqr-crimson-deep: #a1021f;
+  --color-bqr-crimson-subtle: #fdf2f2;
+  --color-bqr-crimson-surface: #f8b4b4;
+  --color-bqr-gold: #d97706;
+  --color-bqr-gold-subtle: #fef3c7;
+  --color-bqr-canvas: #f4f6f8;
+  --color-bqr-card: #ffffff;
+  --color-bqr-border: #e2e8f0;
+  --color-bqr-ink: #0f172a;
+  --color-bqr-ink-soft: #334155;
+  --color-bqr-ink-faint: #64748b;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
+}
+
+html,
+body,
+#root {
+  min-height: 100svh;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bqr-canvas);
+  color: var(--color-bqr-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
