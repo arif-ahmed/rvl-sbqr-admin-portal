@@ -1,7 +1,6 @@
 // Wire types for the SBQR.Api internal-admin surface
 // (source: rvl-secure-bqr-manager controllers/contracts, /openapi/v1.internal-admin.json).
-// Casings below match the wire exactly — note the tenant-application DTOs use
-// snake_case JsonPropertyName overrides while the rest use default camelCase.
+// Casings below match the wire exactly.
 
 export type TenantStatus = 'Pending' | 'Active' | 'Suspended' | 'Terminated'
 
@@ -42,22 +41,6 @@ export interface ProvisionTenantConfigurationResponse {
 
 export interface LifecycleReasonRequest {
   reason?: string | null
-}
-
-export interface TenantApplicationResponse {
-  tenant_application_id: string
-  tenant_id: string
-  platform: 'ANDROID' | 'IOS'
-  package_id: string
-  status: string
-  is_active: boolean
-  created_at: string
-  modified_at: string | null
-}
-
-export interface RegisterTenantApplicationRequest {
-  platform: string
-  package_id: string
 }
 
 export interface CryptoKeySummary {

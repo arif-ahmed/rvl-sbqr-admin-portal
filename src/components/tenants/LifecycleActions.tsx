@@ -37,7 +37,6 @@ export function LifecycleActions({ tenant }: { tenant: TenantResponse }) {
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['tenant', tenant.tenantId] })
     void queryClient.invalidateQueries({ queryKey: ['tenants'] })
-    void queryClient.invalidateQueries({ queryKey: ['applications', tenant.tenantId] })
     void queryClient.invalidateQueries({ queryKey: ['activeKey', tenant.tenantId] })
   }
 

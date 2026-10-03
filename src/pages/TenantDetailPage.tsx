@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, KeyRound, Plus, Smartphone } from 'lucide-react'
+import { ArrowLeft, KeyRound, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { formatDateTime, TENANT_STATUS_STYLES } from '../lib/format'
-import type { TenantApplicationResponse } from '../lib/types'
 import { PageHeader } from '../components/layout/AppShell'
 import { LifecycleActions } from '../components/tenants/LifecycleActions'
 import { OneTimeSecretModal } from '../components/tenants/OneTimeSecretModal'
@@ -19,16 +18,6 @@ import {
   CardTitle,
   EmptyState,
 } from '../components/ui/card'
-import { Field, Input } from '../components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../components/ui/dialog'
 import { Skeleton } from '../components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { cn } from '../lib/utils'
@@ -103,15 +92,11 @@ export default function TenantDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
           <TabsTrigger value="key">Signing key</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <OverviewTab tenantId={tenant.tenantId} status={tenant.status} />
-        </TabsContent>
-        <TabsContent value="applications">
-          <ApplicationsTab tenantId={tenant.tenantId} />
         </TabsContent>
         <TabsContent value="key">
           <KeyTab tenantId={tenant.tenantId} />
@@ -185,192 +170,6 @@ function OverviewTab({ tenantId, status }: { tenantId: string; status: string })
         <OneTimeSecretModal result={provisioned} onAcknowledged={() => setProvisioned(null)} />
       )}
     </div>
-  )
-}
-
-function ApplicationsTab({ tenantId }: { tenantId: string }) {
-  const queryClient = useQueryClient()
-  const [registering, setRegistering] = useState(false)
-
-  const appsQuery = useQuery({
-    queryKey: ['applications', tenantId],
-    queryFn: () => api.applications.list(tenantId),
-  })
-
-  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['applications', tenantId] })
-  const actionMutation = useMutation({
-    mutationFn: ({ app, action }: { app: TenantApplicationResponse; action: 'suspend' | 'reinstate' }) =>
-      action === 'suspend'
-        ? api.applications.suspend(tenantId, app.tenant_application_id)
-        : api.applications.reinstate(tenantId, app.tenant_application_id),
-    onSuccess: invalidate,
-  })
-
-  const apps = appsQuery.data ?? []
-
-  return (
-    <Card>
-      <CardHeader>
-        <div>
-          <CardTitle>Mobile app allow-list</CardTitle>
-          <CardDescription>
-            FR-AUTH-002: package ids permitted to call the token endpoint on behalf of this FI.
-          </CardDescription>
-        </div>
-        <Button size="sm" onClick={() => setRegistering(true)}>
-          <Plus aria-hidden className="size-4" />
-          Register app
-        </Button>
-      </CardHeader>
-
-      {appsQuery.isPending ? (
-        <CardContent className="space-y-2">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-        </CardContent>
-      ) : appsQuery.isError ? (
-        <CardContent>
-          <Alert tone="danger">{(appsQuery.error as ApiError).banner}</Alert>
-        </CardContent>
-      ) : apps.length === 0 ? (
-        <EmptyState
-          title="No registered applications"
-          description="Register the FI's Android/iOS package id to allow direct mobile-app token calls."
-        />
-      ) : (
-        <div className="divide-y divide-bqr-border">
-          {apps.map((app) => (
-            <div key={app.tenant_application_id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-              <Smartphone aria-hidden className="size-4 text-bqr-ink-faint" />
-              <div className="min-w-0">
-                <p className="font-mono text-sm break-all text-bqr-ink">{app.package_id}</p>
-                <p className="text-xs text-bqr-ink-faint">
-                  {app.platform} · registered {formatDateTime(app.created_at)}
-                </p>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                {app.is_active ? <Badge tone="green">Active</Badge> : <Badge tone="crimson">Suspended</Badge>}
-                {app.is_active ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    loading={actionMutation.isPending}
-                    onClick={() => actionMutation.mutate({ app, action: 'suspend' })}
-                  >
-                    Suspend
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    loading={actionMutation.isPending}
-                    onClick={() => actionMutation.mutate({ app, action: 'reinstate' })}
-                  >
-                    Reinstate
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {actionMutation.isError && (
-        <CardContent>
-          <Alert tone="danger">{(actionMutation.error as ApiError).banner}</Alert>
-        </CardContent>
-      )}
-
-      <RegisterApplicationDialog
-        tenantId={tenantId}
-        open={registering}
-        onClose={() => setRegistering(false)}
-        onRegistered={invalidate}
-      />
-    </Card>
-  )
-}
-
-function RegisterApplicationDialog({
-  tenantId,
-  open,
-  onClose,
-  onRegistered,
-}: {
-  tenantId: string
-  open: boolean
-  onClose: () => void
-  onRegistered: () => void
-}) {
-  const [platform, setPlatform] = useState('ANDROID')
-  const [packageId, setPackageId] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  const registerMutation = useMutation({
-    mutationFn: () => api.applications.register(tenantId, { platform, package_id: packageId.trim() }),
-    onSuccess: () => {
-      onRegistered()
-      onClose()
-      setPackageId('')
-      setError(null)
-    },
-    onError: (mutationError: ApiError) => setError(mutationError.banner),
-  })
-
-  return (
-    <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Register mobile application</DialogTitle>
-          <DialogDescription>
-            Adds a package id to the tenant's token-endpoint allow-list. Duplicate
-            (platform, package id) pairs are rejected with 409.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <Field label="Platform" htmlFor="app-platform">
-            <Select value={platform} onValueChange={setPlatform}>
-              <SelectTrigger id="app-platform">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ANDROID">Android</SelectItem>
-                <SelectItem value="IOS">iOS</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field
-            label="Package id"
-            htmlFor="app-package"
-            hint="Android: com.example.bank.app · iOS bundle id."
-          >
-            <Input
-              id="app-package"
-              value={packageId}
-              onChange={(event) => setPackageId(event.target.value)}
-              placeholder="com.example.bank.app"
-            />
-          </Field>
-
-          {error && <Alert tone="danger">{error}</Alert>}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            loading={registerMutation.isPending}
-            disabled={!packageId.trim()}
-            onClick={() => registerMutation.mutate()}
-          >
-            Register
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   )
 }
 

@@ -16,9 +16,7 @@ import type {
   PagedTenantResponse,
   ProvisionTenantConfigurationRequest,
   ProvisionTenantConfigurationResponse,
-  RegisterTenantApplicationRequest,
   RegisterTenantRequest,
-  TenantApplicationResponse,
   TenantResponse,
   ValidateQrRequest,
   ValidateQrResponse,
@@ -163,26 +161,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }).then(json<ProvisionTenantConfigurationResponse>),
-  },
-
-  applications: {
-    list: (tenantId: string) =>
-      request(`/v1/admin/tenants/${tenantId}/applications`).then(
-        json<TenantApplicationResponse[]>,
-      ),
-    register: (tenantId: string, body: RegisterTenantApplicationRequest) =>
-      request(`/v1/admin/tenants/${tenantId}/applications`, {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }).then(json<TenantApplicationResponse>),
-    suspend: (tenantId: string, applicationId: string) =>
-      request(`/v1/admin/tenants/${tenantId}/applications/${applicationId}/suspend`, {
-        method: 'POST',
-      }).then(json<TenantApplicationResponse>),
-    reinstate: (tenantId: string, applicationId: string) =>
-      request(`/v1/admin/tenants/${tenantId}/applications/${applicationId}/reinstate`, {
-        method: 'POST',
-      }).then(json<TenantApplicationResponse>),
   },
 
   keys: {
